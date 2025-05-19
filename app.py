@@ -790,6 +790,11 @@ elif selected == "Tentang":
             target="_blank" class="cv-button">
                 <span class="cv-text">📄 Lihat CV</span>
             </a>
+            <br><br>
+            <a href="https://forms.gle/FMoaNBnU2JnksTvX7"
+            target="_blank" class="cv-button">
+                <span class="cv-text">📝 Beri Tanggapan (Kuesioner)</span>
+            </a>          
         """, unsafe_allow_html=True)
 st.markdown("---")
 st.caption("© 2025 Aplikasi Klasifikasi Tanaman | Dibuat oleh Roni | Tugas Akhir Teknik Informatika")
