@@ -241,19 +241,19 @@ elif selected == "Klasifikasi":
         with col1:
             nitrogen = st.number_input(
                 'Nitrogen (N) [mg/kg]', 
-                min_value=20.0, max_value=300.0, step=1.0, format="%.2f", 
+                min_value=00.0, max_value=300.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar nitrogen dalam tanah (20 - 298 mg/kg)"
             )
 
             phosphor = st.number_input(
                 'Fosfor (P) [mg/kg]', 
-                min_value=25.0, max_value=160.0, step=1.0, format="%.2f", 
+                min_value=00.0, max_value=160.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar fosfor dalam tanah (25 - 150 mg/kg)"
             )
 
             kalium = st.number_input(
                 'Kalium (K) [mg/kg]', 
-                min_value=30.0, max_value=600.0, step=1.0, format="%.2f", 
+                min_value=00.0, max_value=600.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar kalium dalam tanah (30 - 599 mg/kg)"
             )
 
