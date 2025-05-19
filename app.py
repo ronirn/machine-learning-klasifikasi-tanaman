@@ -241,44 +241,44 @@ elif selected == "Klasifikasi":
         with col1:
             nitrogen = st.number_input(
                 'Nitrogen (N) [mg/kg]', 
-                min_value=00.0, max_value=300.0, step=1.0, format="%.2f", 
+                min_value=20.0, max_value=300.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar nitrogen dalam tanah (20 - 298 mg/kg)"
             )
 
             phosphor = st.number_input(
                 'Fosfor (P) [mg/kg]', 
-                min_value=00.0, max_value=160.0, step=1.0, format="%.2f", 
+                min_value=25.0, max_value=160.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar fosfor dalam tanah (25 - 150 mg/kg)"
             )
 
             kalium = st.number_input(
                 'Kalium (K) [mg/kg]', 
-                min_value=00.0, max_value=600.0, step=1.0, format="%.2f", 
+                min_value=30.0, max_value=600.0, step=1.0, format="%.2f", 
                 help="Masukkan kadar kalium dalam tanah (30 - 599 mg/kg)"
             )
 
         with col2:
             ph = st.slider(
                 'pH Tanah', 
-                min_value=5.0, max_value=8.5, step=0.1, value=6.5,
+                min_value=5.0, max_value=8.5, step=0.1, value=5.0,
                 help="Masukkan nilai keasaman tanah (rentang 5.01 - 8.20)"
             )
 
             temp = st.slider(
                 'Suhu (°C)', 
-                min_value=10, max_value=30, step=1, value=24,
+                min_value=10, max_value=30, step=1, value=10,
                 help="Masukkan suhu udara rata-rata lokasi (10 - 30 °C)"
             )
 
             humidity = st.slider(
                 'Kelembapan Udara (%)', 
-                min_value=0, max_value=90, step=1, value=50,
+                min_value=0, max_value=90, step=1, value=0,
                 help="Masukkan kelembapan udara rata-rata (0 - 89%)"
             )
 
             rainfall = st.slider(
                 'Curah Hujan (mm/tahun)', 
-                min_value=100, max_value=4500, step=10, value=1200,
+                min_value=175, max_value=4500, step=10, value=175,
                 help="Masukkan curah hujan rata-rata tahunan (175 - 4452 mm)"
             )
 
