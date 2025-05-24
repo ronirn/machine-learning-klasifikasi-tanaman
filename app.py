@@ -14,6 +14,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import GridSearchCV
+from streamlit_elements import elements, mui, nivo, html
+import json
 from PIL import Image
 import base64
 import random
@@ -371,90 +373,77 @@ elif selected == "Klasifikasi":
             mime='application/pdf'
         )
 
+# Visualisasi
 elif selected == "Visualisasi":
-    # -----------------------------
-    # Halaman Visualisasi
     st.title("Visualisasi Data Tanah & Iklim")
     st.markdown("Dataset ini digunakan untuk **mengklasifikasikan jenis tanaman** berdasarkan parameter tanah dan iklim seperti Nitrogen, Phosphor, Kalium, suhu, kelembaban, pH, dan curah hujan.")
+    st.info("Klik kolom pada tabel di bawah untuk melihat detail interaktif. Dataset terdiri dari beberapa fitur dan label jenis tanaman.")
 
-    st.info(" Klik kolom pada tabel di bawah untuk melihat detail interaktif. Dataset terdiri dari beberapa fitur dan label jenis tanaman.")
-
-    # Load dataset
+    # Load data
     df = pd.read_csv("dataset/data_tanaman.csv")
-    df['Label'] = df['Label'].str.title()  # Rapikan kapitalisasi nama tanaman
+    df["Label"] = df["Label"].str.title()
 
-    # Tampilkan dataset dalam ekspander
+    # Tampilkan data awal
     with st.expander("***Lihat Data Awal (klik untuk membuka)***"):
         st.dataframe(df, use_container_width=True, height=400)
-
-        # Tombol untuk mengunduh dataset sebagai file CSV
         csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label=" Unduh Data sebagai CSV",
-            data=csv,
-            file_name='data_tanaman.csv',
-            mime='text/csv'
-        )
-        
-    # Layout Grid: Distribusi dan Pie Chart
-    # -------------------------
+        st.download_button(" Unduh Data sebagai CSV", csv, "data_tanaman.csv", "text/csv")
+
+    # Distribusi label
+    distribusi = df['Label'].value_counts().reset_index()
+    distribusi.columns = ['Tanaman', 'Jumlah']
+    labels = distribusi['Tanaman'].tolist()
+    data_values = distribusi['Jumlah'].tolist()
+
     col1, col2 = st.columns(2)
 
+    # Bar Chart interaktif
     with col1:
-        st.subheader("Distribusi Jenis Tanaman")
-        distribusi = df['Label'].value_counts().reset_index()
-        distribusi.columns = ['Tanaman', 'Jumlah']
-        fig_bar = px.bar(
-            distribusi, x='Tanaman', y='Jumlah',
-            color='Tanaman',
-            template='plotly_dark',  # Ganti jadi dark template
-            color_discrete_sequence=px.colors.qualitative.Plotly,  # Palet warna cerah & gelap
-            title="Jumlah Data per Jenis Tanaman"
-        )
-        fig_bar.update_layout(
-            plot_bgcolor='rgba(0,0,0,0)',  # Buat background plot transparan
-            paper_bgcolor='rgba(0,0,0,0)',  # Buat background keseluruhan transparan
-            font=dict(color='white')  # Bikin tulisan warna putih supaya jelas di gelap
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+            st.subheader("Distribusi Jenis Tanaman")
+            distribusi = df['Label'].value_counts().reset_index()
+            distribusi.columns = ['Tanaman', 'Jumlah']
+            fig_bar = px.bar(
+                distribusi, x='Tanaman', y='Jumlah',
+                color='Tanaman',
+                template='plotly_dark',  # Ganti jadi dark template
+                color_discrete_sequence=px.colors.qualitative.Plotly,  # Palet warna cerah & gelap
+                title="Jumlah Data per Jenis Tanaman"
+            )
+            fig_bar.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',  # Buat background plot transparan
+                paper_bgcolor='rgba(0,0,0,0)',  # Buat background keseluruhan transparan
+                font=dict(color='white')  # Bikin tulisan warna putih supaya jelas di gelap
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
 
-        with col2:
-            st.subheader("Proporsi Data (Pie Chart)")
-            
-            fig_pie = px.pie(
-                distribusi,
-                names='Tanaman',
-                values='Jumlah',
-                hole=0.2,
-                template='plotly_dark'
+
+    # Pie Chart
+    with col2:
+        st.subheader("Proporsi Data (Pie Chart)")
+        with elements("pie_chart"):
+            mui.Box(
+                sx={"height": 500},
+                children=nivo.Pie(
+                    data=[{"id": label, "label": label, "value": value} for label, value in zip(labels, data_values)],
+                    margin={"top": 40, "right": 80, "bottom": 80, "left": 80},
+                    innerRadius=0.5,
+                    padAngle=0.7,
+                    cornerRadius=3,
+                    activeOuterRadiusOffset=8,
+                    borderWidth=1,
+                    borderColor={"from": "color", "modifiers": [["darker", 0.2]]},
+                    arcLinkLabelsSkipAngle=10,
+                    arcLinkLabelsTextColor="#333333",
+                    arcLinkLabelsThickness=2,
+                    arcLinkLabelsColor={"from": "color"},
+                    arcLabelsSkipAngle=10,
+                    arcLabelsTextColor={"from": "color", "modifiers": [["darker", 2]]}
+                )
             )
-            
-            fig_pie.update_traces(
-                textinfo='percent+label',
-                textposition='outside',                      # Label di luar potongan
-                insidetextorientation='radial',
-                marker=dict(line=dict(color='black', width=1)),  # Garis tepi slice
-                textfont=dict(size=12),                      # Ukuran teks agar lebih seragam
-                pull=[0.03] * len(distribusi)                # Tarik slice sedikit agar tidak padat
-            )
-            
-            fig_pie.update_layout(
-                showlegend=True,
-                legend_title_text='Jenis Tanaman',
-                margin=dict(t=50, b=20, l=20, r=20),
-                font=dict(color='black'),
-                uniformtext_minsize=10,
-                uniformtext_mode='hide',                     # Hindari label tumpang tindih
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
-            )
-            
-            st.plotly_chart(fig_pie, use_container_width=True)      
+
     st.markdown("---")
-  
-    # -------------------------
-    # Scatter Plot Interaktif
-    # -------------------------
+
+    # # Scatter Plot interaktif
     st.subheader(" Scatter Plot Antar Variabel")
     
     fitur_x = st.selectbox("Pilih Fitur (Sumbu X)", df.columns[:-1], key="scatter_x")
@@ -466,8 +455,9 @@ elif selected == "Visualisasi":
                              template='plotly_white',
                              title=f"Scatter Plot: {fitur_x} vs {fitur_y}")
     st.plotly_chart(fig_scatter, use_container_width=True)
+
     st.markdown("---")
-    
+
     # Daftar fitur numerik
     features = ['N', 'P', 'K', 'Temperature', 'Humidity', 'pH', 'Rainfall']
 
@@ -508,14 +498,13 @@ elif selected == "Visualisasi":
             top_corr_df.to_html(escape=False, index=False),
             unsafe_allow_html=True
         )
-    
 
 elif selected == "Evaluasi":
     st.title(" Evaluasi Model Machine Learning")
     st.markdown("Evaluasi dilakukan pada dua model klasifikasi: **Naive Bayes** dan **Decision Tree**.")
-    
-    selected_model = st.selectbox("Pilih Model untuk Evaluasi", ["Naive Bayes", "Decision Tree"])
-    
+
+    selected_model = st.selectbox(" Pilih Model untuk Evaluasi", ["Naive Bayes", "Decision Tree"])
+
     df_final = pd.read_csv('dataset/data_final.csv')
     X = df_final.drop('Label', axis=1)
     y = df_final['Label']
@@ -528,21 +517,19 @@ elif selected == "Evaluasi":
         y_pred_test = model.predict(X_test)
         cv_scores = cross_val_score(model, X, y, cv=StratifiedKFold(10, shuffle=True, random_state=42), scoring='accuracy')
 
-        # Simpan juga hasil Decision Tree untuk perbandingan
         param_grid = {'max_depth': [5, 10, 15], 'min_samples_split': [2, 5], 'min_samples_leaf': [1, 3]}
-        grid = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=5, scoring='accuracy')
+        grid = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=10, scoring='accuracy')
         grid.fit(X_train, y_train)
 
     else:
         param_grid = {'max_depth': [5, 10, 15], 'min_samples_split': [2, 5], 'min_samples_leaf': [1, 3]}
-        grid = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=5, scoring='accuracy')
+        grid = GridSearchCV(DecisionTreeClassifier(random_state=42), param_grid, cv=10, scoring='accuracy')
         grid.fit(X_train, y_train)
         model = grid.best_estimator_
         y_pred_train = model.predict(X_train)
         y_pred_test = model.predict(X_test)
         cv_scores = cross_val_score(model, X, y, cv=StratifiedKFold(10, shuffle=True, random_state=42), scoring='accuracy')
 
-    # Metrik evaluasi
     metrics_train = {
         "Akurasi": accuracy_score(y_train, y_pred_train),
         "Presisi": precision_score(y_train, y_pred_train, average='weighted', zero_division=0),
@@ -556,19 +543,19 @@ elif selected == "Evaluasi":
         "F1-Score": f1_score(y_test, y_pred_test, average='weighted', zero_division=0)
     }
 
+    st.subheader("Metrik Evaluasi")
+
     # Gabungkan metrik train dan test dalam satu DataFrame
     df_metrics = pd.DataFrame({
         "Metrik": list(metrics_train.keys()),
-        "Data Latih (%)": [v * 100 for v in metrics_train.values()],
-        "Data Uji (%)": [v * 100 for v in metrics_test.values()]
+        "Data Latih (%)": [f"{v * 100:.2f}" for v in metrics_train.values()],
+        "Data Uji (%)": [f"{v * 100:.2f}" for v in metrics_test.values()],
+        "Δ Uji - Latih (%)": [f"{(vu - vt) * 100:.2f}" for vt, vu in zip(metrics_train.values(), metrics_test.values())]
     })
 
-    # Format angka 2 desimal
-    df_metrics["Data Latih (%)"] = df_metrics["Data Latih (%)"].map("{:.2f}".format)
-    df_metrics["Data Uji (%)"] = df_metrics["Data Uji (%)"].map("{:.2f}".format)
-
-    st.subheader(" Metrik Evaluasi")
+    # Tampilkan sebagai tabel
     st.table(df_metrics)
+
 
     st.subheader(" Confusion Matrix")
     cm = confusion_matrix(y_test, y_pred_test)
@@ -579,50 +566,47 @@ elif selected == "Evaluasi":
         colorscale='Blues',
         showscale=True
     )
+    fig_cm.update_layout(
+        title="Confusion Matrix",
+        xaxis_title="Predicted",
+        yaxis_title="Actual",
+        margin=dict(l=40, r=40, t=60, b=40),
+        template='plotly_white'
+    )
     st.plotly_chart(fig_cm, use_container_width=True)
 
-    # Tampilkan Cross-Validation dengan metric cards
-    st.subheader(" Cross-Validation (10-fold)")
+    st.subheader(" Cross-Validation (10-Fold)")
     col1, col2 = st.columns(2)
     col1.metric("Rata-rata Akurasi", f"{cv_scores.mean()*100:.2f}%")
     col2.metric("Standar Deviasi", f"{cv_scores.std()*100:.2f}%")
 
-    # Tambahkan boxplot cross-validation scores untuk visualisasi distribusi
-    fig_cv = px.box(
-        x=cv_scores * 100,
-        labels={"x": "Akurasi (%)"},
-        title="Distribusi Akurasi Cross-Validation"
-    )
+    fig_cv = px.box(x=cv_scores * 100, labels={"x": "Akurasi (%)"}, title="Distribusi Akurasi Cross-Validation")
+    fig_cv.update_layout(template="plotly_dark")
+    st.plotly_chart(fig_cv, use_container_width=True)
 
-    # Grafik Perbandingan Akurasi Model
     accuracy_nb = accuracy_score(y_test, GaussianNB().fit(X_train, y_train).predict(X_test))
     accuracy_dt = accuracy_score(y_test, grid.best_estimator_.predict(X_test))
-
     akurasi_model = {
         "Naive Bayes": accuracy_nb * 100,
         "Decision Tree": accuracy_dt * 100
     }
-
     fig_bar = go.Figure()
-
     fig_bar.add_trace(go.Bar(
         x=list(akurasi_model.keys()),
         y=list(akurasi_model.values()),
         text=[f"{v:.2f}%" for v in akurasi_model.values()],
         textposition='auto',
-        marker_color=['skyblue', 'orange'],
+        marker_color=['#4682B4', '#2E8B57'],
         hovertemplate='%{x}<br>Akurasi: %{y:.2f}%<extra></extra>'
     ))
-
     fig_bar.update_layout(
-        title=" Perbandingan Akurasi Model",
+        title="Perbandingan Akurasi Model",
         yaxis=dict(title='Akurasi (%)', range=[0, 110]),
         xaxis=dict(title='Model'),
         margin=dict(l=40, r=40, t=60, b=40),
         template='plotly_white',
         hovermode="x unified"
     )
-
     st.plotly_chart(fig_bar, use_container_width=True)
 
     st.subheader(" Penjelasan Singkat Model")
@@ -641,34 +625,62 @@ elif selected == "Evaluasi":
 
     st.subheader(" Unduh Laporan Evaluasi")
 
+    class PDF(FPDF):
+        def header(self):
+            self.set_font("Arial", "B", 14)
+            self.cell(0, 10, f"Laporan Evaluasi Model: {self.model_name}", ln=True, align='C')
+            self.ln(5)
+            self.set_draw_color(0, 0, 0)
+            self.line(10, self.get_y(), 200, self.get_y())
+            self.ln(10)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Arial", "I", 9)
+            self.set_text_color(150)
+            self.cell(0, 10, "Develop oleh Roni - Tugas Akhir 2025 | Teknik Informatika", align='C')
+
     def generate_pdf(model_name, metrics_train, metrics_test, cv_scores):
-        pdf = FPDF()
+        pdf = PDF()
+        pdf.model_name = model_name
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, f"Laporan Evaluasi Model: {model_name}", ln=True, align='C')
-        pdf.ln(5)
-        pdf.cell(0, 10, "Data Latih", ln=True)
-        for m, v in metrics_train.items():
-            pdf.cell(0, 8, f"{m}: {v*100:.2f}%", ln=True)
-        pdf.ln(5)
-        pdf.cell(0, 10, "Data Uji", ln=True)
-        for m, v in metrics_test.items():
-            pdf.cell(0, 8, f"{m}: {v*100:.2f}%", ln=True)
-        pdf.ln(5)
-        pdf.cell(0, 10, "Cross-Validation", ln=True)
-        pdf.cell(0, 8, f"Rata-rata Akurasi: {cv_scores.mean()*100:.2f}%", ln=True)
-        pdf.cell(0, 8, f"Standar Deviasi: {cv_scores.std()*100:.2f}%", ln=True)
-        pdf.ln(5)
-        pdf.set_font("Arial", size=9, style='I')
-        pdf.set_text_color(150)
-        pdf.cell(0, 10, "Develop oleh Roni - Tugas Akhir 2025 | Teknik Informatika", align='C')
+
+        # Table Headers
+        pdf.set_fill_color(200, 220, 255)
+        pdf.cell(60, 10, "Metrik", border=1, fill=True, align='C')
+        pdf.cell(40, 10, "Data Latih", border=1, fill=True, align='C')
+        pdf.cell(40, 10, "Data Uji", border=1, fill=True, align='C')
+        pdf.cell(40, 10, "Cross-Val", border=1, fill=True, align='C')
+        pdf.ln()
+
+        # Table Rows
+        all_metrics = set(metrics_train.keys()) | set(metrics_test.keys())
+        for m in all_metrics:
+            train_val = f"{metrics_train.get(m, 0)*100:.2f}%" if m in metrics_train else "-"
+            test_val = f"{metrics_test.get(m, 0)*100:.2f}%" if m in metrics_test else "-"
+            cv_val = "-"  # default unless Akurasi
+            if m.lower() == "akurasi":
+                cv_val = f"{cv_scores.mean()*100:.2f}% ± {cv_scores.std()*100:.2f}%"
+            pdf.cell(60, 10, m, border=1)
+            pdf.cell(40, 10, train_val, border=1, align='C')
+            pdf.cell(40, 10, test_val, border=1, align='C')
+            pdf.cell(40, 10, cv_val, border=1, align='C')
+            pdf.ln()
 
         return pdf.output(dest='S').encode('latin1')
 
+    # PDF generation and download link
     pdf_bytes = generate_pdf(selected_model, metrics_train, metrics_test, cv_scores)
     b64 = base64.b64encode(pdf_bytes).decode()
-    href = f'<a href="data:application/octet-stream;base64,{b64}" download="evaluasi_{selected_model.lower().replace(" ", "_")}.pdf">' \
-           f'<button style="background-color:green; color:white; padding:10px; border:none; border-radius:5px;">📄 Download PDF</button></a>'
+    href = f'''
+    <a href="data:application/octet-stream;base64,{b64}" 
+    download="evaluasi_{selected_model.lower().replace(" ", "_")}.pdf">
+    <button style="background-color:green; color:white; padding:10px; border:none; border-radius:5px;">
+    📄 Download PDF
+    </button>
+    </a>
+    '''
     st.markdown(href, unsafe_allow_html=True)
 
 elif selected == "Tentang":
@@ -794,8 +806,9 @@ elif selected == "Tentang":
             <a href="https://forms.gle/FMoaNBnU2JnksTvX7"
             target="_blank" class="cv-button">
                 <span class="cv-text">📝 Beri Tanggapan (Kuesioner)</span>
-            </a>          
+            </a>  
         """, unsafe_allow_html=True)
+
 st.markdown("---")
 st.caption("© 2025 Aplikasi Klasifikasi Tanaman | Dibuat oleh Roni | Tugas Akhir Teknik Informatika")
 
